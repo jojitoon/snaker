@@ -35,6 +35,7 @@
   width: 20px;
   height: 20px;
   background: #f00;
+  animation: grow 1s linear infinite;
 }
 
 .game-over {
@@ -85,4 +86,14 @@ button:active {
   top: 0;
   left: 0;
   padding: 5px;
+}
+
+@keyframes grow {
+  0%,
+  100% {
+    transform: scale(100%);
+  }
+  50% {
+    transform: scale(110%);
+  }
 }

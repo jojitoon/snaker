@@ -10,37 +10,45 @@ const DIRECTIONS = {
   EAST: 'EAST',
   WEST: 'WEST',
 };
+const ARROWS = {
+  left: 'ArrowLeft',
+  right: 'ArrowRight',
+  up: 'ArrowUp',
+  down: 'ArrowDown',
+};
 
-const getDirection = (key, direction) => {
-  switch (direction) {
-    case DIRECTIONS.NORTH:
-      return key === 'ArrowRight'
-        ? DIRECTIONS.EAST
-        : key === 'ArrowLeft'
-        ? DIRECTIONS.WEST
-        : DIRECTIONS.NORTH;
-    case DIRECTIONS.SOUTH:
-      return key === 'ArrowRight'
-        ? DIRECTIONS.WEST
-        : key === 'ArrowLeft'
-        ? DIRECTIONS.EAST
-        : DIRECTIONS.SOUTH;
-    case DIRECTIONS.EAST:
-      return key === 'ArrowRight'
-        ? DIRECTIONS.SOUTH
-        : key === 'ArrowLeft'
-        ? DIRECTIONS.NORTH
-        : DIRECTIONS.EAST;
-    case DIRECTIONS.WEST:
-      return key === 'ArrowRight'
-        ? DIRECTIONS.NORTH
-        : key === 'ArrowLeft'
-        ? DIRECTIONS.SOUTH
-        : DIRECTIONS.WEST;
+const allowedKeys = Object.values(ARROWS);
 
-    default:
-      return direction;
-  }
+const NEXT_DIRECTIONS = {
+  [DIRECTIONS.NORTH]: {
+    [ARROWS.down]: DIRECTIONS.NORTH,
+    [ARROWS.up]: DIRECTIONS.NORTH,
+    [ARROWS.left]: DIRECTIONS.WEST,
+    [ARROWS.right]: DIRECTIONS.EAST,
+  },
+  [DIRECTIONS.SOUTH]: {
+    [ARROWS.down]: DIRECTIONS.SOUTH,
+    [ARROWS.up]: DIRECTIONS.SOUTH,
+    [ARROWS.left]: DIRECTIONS.WEST,
+    [ARROWS.right]: DIRECTIONS.EAST,
+  },
+  [DIRECTIONS.EAST]: {
+    [ARROWS.down]: DIRECTIONS.SOUTH,
+    [ARROWS.up]: DIRECTIONS.NORTH,
+    [ARROWS.left]: DIRECTIONS.EAST,
+    [ARROWS.right]: DIRECTIONS.EAST,
+  },
+  [DIRECTIONS.WEST]: {
+    [ARROWS.down]: DIRECTIONS.SOUTH,
+    [ARROWS.up]: DIRECTIONS.NORTH,
+    [ARROWS.left]: DIRECTIONS.WEST,
+    [ARROWS.right]: DIRECTIONS.WEST,
+  },
+};
+
+const getNextDirection = (key, direction) => {
+  if (!allowedKeys.includes(key)) return direction;
+  return NEXT_DIRECTIONS[direction][key];
 };
 
 const FOODS_ARRAY = [
@@ -126,6 +134,7 @@ export default function SnakeGame() {
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [started, setStarted] = useState(false);
 
   useEffect(() => {
     const hScore = localStorage.getItem('highScore');
@@ -166,15 +175,17 @@ export default function SnakeGame() {
           if (snake.length > 3) {
             setSnake((snake) => {
               const newSnake = [...snake];
+              newSnake[0].eaten = true;
               newSnake.pop();
               return newSnake;
             });
           }
         } else {
-          setSnake((snake) => [
-            ...snake,
-            { x: head.x, y: head.y, type: 'body' },
-          ]);
+          setSnake((snake) => {
+            const newSnake = [...snake, { x: head.x, y: head.y, type: 'body' }];
+            newSnake[0].eaten = true;
+            return newSnake;
+          });
         }
       }
     },
@@ -224,6 +235,7 @@ export default function SnakeGame() {
         break;
     }
 
+    newHead.eaten = false;
     head.type = 'body';
     newSnake.unshift(newHead);
     newSnake.pop();
@@ -236,7 +248,7 @@ export default function SnakeGame() {
 
   const handleKeyDown = useCallback(
     (e) => {
-      setDirection(getDirection(e.key, direction));
+      setDirection(getNextDirection(e.key, direction));
     },
     [direction]
   );
@@ -251,6 +263,11 @@ export default function SnakeGame() {
           width: `${SNAKE_SIZE - 2}px`,
           height: `${SNAKE_SIZE - 2}px`,
           margin: '1px',
+          ...(part.eaten
+            ? {
+                transform: 'scale(120%)',
+              }
+            : {}),
         }}
       />
     ));
@@ -272,14 +289,14 @@ export default function SnakeGame() {
   };
 
   useEffect(() => {
-    if (!gameOver && !isPaused) {
+    if (!gameOver && !isPaused && started) {
       intervalRef.current = setTimeout(handleMove, 100);
     }
     return () => {
       clearTimeout(intervalRef?.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [snake, gameOver, isPaused]);
+  }, [snake, gameOver, isPaused, started]);
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
@@ -337,6 +354,15 @@ export default function SnakeGame() {
               Your score is <h2>{score}</h2>
             </p>
             <button onClick={() => setIsPaused(false)}>continue</button>
+          </div>
+        </div>
+      )}
+      {!started && !isPaused && !gameOver && (
+        <div className='game-over'>
+          <div className='content'>
+            <h1>Welcome to Snaker</h1>
+
+            <button onClick={() => setStarted(true)}>Start Game</button>
           </div>
         </div>
       )}
