@@ -131,7 +131,6 @@ const generateXY = () => {
 
 const generateUniqueXY = (blocks) => {
   const XY = generateXY();
-
   const existABlock = blocks.find(
     (block) => block.x === XY.x && block.y === XY.y
   );
@@ -147,6 +146,7 @@ const generateFood = (blocks = []) => {
   const foodType = FOODS_ARRAY[randomIndex];
 
   const XY = generateUniqueXY(blocks);
+  console.log('XY', XY);
   return {
     ...XY,
     type: foodType,
@@ -297,7 +297,7 @@ export default function SnakeGame() {
   const intervalRef = useRef();
   const [gameOver, setGameover] = useState(false);
   const [direction, setDirection] = useState(DIRECTIONS.EAST);
-  const [foods, setFoods] = useState(generateInitialFoods(LEVEL_1_BLOCK));
+  const [foods, setFoods] = useState(generateInitialFoods(10, LEVEL_1_BLOCK));
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -308,7 +308,7 @@ export default function SnakeGame() {
   useEffect(() => {
     const blks = getLevelBlock(currentLevel);
     setLevelBlock(blks);
-    setFoods(generateInitialFoods(blks));
+    setFoods(generateInitialFoods(10, blks));
   }, [currentLevel]);
 
   useEffect(() => {
@@ -517,7 +517,7 @@ export default function SnakeGame() {
   }, [handleKeyDown]);
 
   const handleGameOver = () => {
-    setFoods(generateInitialFoods());
+    setFoods(generateInitialFoods(10, LEVEL_1_BLOCK));
     setSnake(initialSnake);
     setScore(0);
     setDirection(DIRECTIONS.EAST);
